@@ -16,18 +16,27 @@ A Basic LLM Chain powered by Google Gemini reads the resume and extracts the can
 4. Save Information
 An HTTP Request node sends the parsed JSON to the target endpoint, then three parallel branches handle the repeating sections of the CV. Each branch uses Edit Fields → Split Out → Create a row, so a candidate with 4 jobs, 2 degrees, and 12 skills becomes the right number of rows in each table instead of one blob:
 
+| Branch| Section         | Result |
+| :---  | :---            | :--- |
+| 1     | Work experience | one row per position |
+| 2     | Education       | one row per degree |
+| 3     | Skills          | one row per skill |
+
 Why it's useful
-Handles any CV layout — the LLM reads meaning, not templates
-Normalizes messy resumes into a queryable candidate database
-Split-out rows make filtering easy ("show me everyone who knows Python")
-Fully hands-off: email in, structured data out
+* Handles any CV layout — the LLM reads meaning, not templates
+* Normalizes messy resumes into a queryable candidate database
+* Split-out rows make filtering easy ("show me everyone who knows Python")
+* Fully hands-off: email in, structured data out
+
 Stack
-n8n — orchestration
-Google Gemini — resume understanding
-Gmail API — ingestion
-Structured Output Parser — schema-validated JSON
+* n8n — orchestration
+* Google Gemini — resume understanding
+* Gmail API — ingestion
+* Structured Output Parser — schema-validated JSON
+
 Setup
-Import the workflow JSON into your n8n instance.
-Connect your Gmail and Google Gemini credentials.
-Update the HTTP Request URL and the base/table IDs in the Create a row nodes.
-Adjust the output schema in the Structured Output Parser if you want to capture additional fields (languages, certifications, portfolio links…).
+1. Import the workflow JSON into your n8n instance.
+2. Connect your Gmail and Google Gemini credentials.
+3. Update the HTTP Request URL and the base/table IDs in the Create a row nodes.
+4. Adjust the output schema in the Structured Output Parser if you want to capture additional fields (languages, certifications, portfolio links…).
+5. Activate the workflow.

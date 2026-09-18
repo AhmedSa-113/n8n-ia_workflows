@@ -1,0 +1,646 @@
+{
+  "name": "First workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -400,
+        -48
+      ],
+      "id": "0e3310ce-572e-4c27-8f69-a86803454e95",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PxGwoSGkbAopiKhd",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        -48
+      ],
+      "id": "f19edc77-db39-422a-a897-93a2520a402c",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dfb6e187-6517-4b5f-90dd-7ae13e5867ac",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        32,
+        -48
+      ],
+      "id": "6433862c-c255-411c-8ab7-68b067187a64",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an HR expert, you are given a detailed CV text\nextract\nName\nEmail\nTelephone\nExperience\nSkills\nEducation\n\nThis is the CV text: {{ $json.text }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        304,
+        -48
+      ],
+      "id": "4cd58685-614c-44f6-8098-0d856aeafe9f",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        144
+      ],
+      "id": "27aa7e93-1f71-44e2-a99a-2e6f964d06bd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "j9M9u1GeJcdHzAEi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Full Name\",\n  \"email\": \"email@example.com\",\n  \"telephone\": \"+212 600 000 000\",\n  \"experience\": [\n    \"Job Title at Company (2020 - 2023)\"\n  ],\n  \"skills\": [\n    \"Skill 1\",\n    \"Skill 2\"\n  ],\n  \"education\": \"Degree Name\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        128
+      ],
+      "id": "3aa148d1-8f6f-4352-9271-8f7b3e406931",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sgbcttoutgzngsxoviwj.supabase.co/rest/v1/CVs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "APIkey",
+              "value": "sb_publishable_3ncSX_OPRSF-3g9fnJKUCQ_dUJpDLE7"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer sb_publishable_3ncSX_OPRSF-3g9fnJKUCQ_dUJpDLE7"
+            },
+            {
+              "name": "Prefer ",
+              "value": " return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.output.name }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.output.telephone }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.output.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        -48
+      ],
+      "id": "d48f2467-fc94-4b38-8029-7b64eae14cc6",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "tableId": "Experiences",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "text",
+              "fieldValue": "={{ $json.experience }}"
+            },
+            {
+              "fieldId": "cvs_id",
+              "fieldValue": "={{ $('HTTP Request').first().json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        -112
+      ],
+      "id": "040420cb-747c-408d-95b7-631c6848a253",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LVzqTTTZG1iKvJpO",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "abab7b6b-20a7-4aa2-94e1-e764758f3218",
+              "name": "experience",
+              "value": "={{ $('Basic LLM Chain').item.json.output.experience }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1024,
+        -112
+      ],
+      "id": "1c91adac-ff5e-4ad4-a25f-03131ff5cda9",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "experience",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        -112
+      ],
+      "id": "702d3671-7031-418a-b89f-943c231de847",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "tableId": "Skills",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "text",
+              "fieldValue": "={{ $json.skills }}"
+            },
+            {
+              "fieldId": "cvs_id",
+              "fieldValue": "={{ $('HTTP Request').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        352
+      ],
+      "id": "bf3f2933-5265-48b3-96f9-274e332d15c5",
+      "name": "Create a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LVzqTTTZG1iKvJpO",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "skills",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        352
+      ],
+      "id": "db109e92-4457-4350-8ddd-bd9487645a45",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "abab7b6b-20a7-4aa2-94e1-e764758f3218",
+              "name": "skills",
+              "value": "={{ $('Basic LLM Chain').item.json.output.skills }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1024,
+        352
+      ],
+      "id": "df627851-5b17-4b4b-9734-ee7aa03133f7",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "tableId": "Education",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "text",
+              "fieldValue": "={{ $json.education }}"
+            },
+            {
+              "fieldId": "cvs_id",
+              "fieldValue": "={{ $('HTTP Request').first().json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        112
+      ],
+      "id": "8c05dc4a-f728-47b1-acf2-420ab17b40d3",
+      "name": "Create a row2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LVzqTTTZG1iKvJpO",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "education",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        112
+      ],
+      "id": "da69c9ca-1ce1-4eb8-b03e-e1b7634d1f2c",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "abab7b6b-20a7-4aa2-94e1-e764758f3218",
+              "name": "education",
+              "value": "={{ $('Basic LLM Chain').item.json.output.education }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1024,
+        112
+      ],
+      "id": "a99032b6-0fe6-477d-9de0-9637af1128a8",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "content": "## Gmail Trigger\n",
+        "height": 288,
+        "width": 166
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        -128
+      ],
+      "id": "89d82f3b-42e4-404f-85bf-306b38ee6e61",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Prepare Data\n",
+        "height": 288,
+        "width": 384,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        -128
+      ],
+      "id": "60a57d88-832f-425d-9020-f9fb7d840ad2",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Extract information",
+        "height": 432,
+        "width": 544,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -128
+      ],
+      "id": "ef6939c3-a572-4982-9db7-787969178cc0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Save Information",
+        "height": 672,
+        "width": 1056,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        704,
+        -128
+      ],
+      "id": "ea9a8abe-afa9-478b-93af-51324e369388",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {
+    "Basic LLM Chain": [
+      {
+        "json": {
+          "output": {
+            "name": "Youssef El Amrani",
+            "email": "youssef.amrani@email.com",
+            "telephone": "+212 6 12 34 56 78",
+            "experience": [
+              "Développeur Web & Automation — Tech Solutions, Casablanca (Janvier 2024 – Présent) : Développement d'APIs RESTful et intégration de workflows n8n pour automatiser le suivi des prospects. Optimisation des requêtes de base de données PostgreSQL.",
+              "Développeur Junior (Stage) — CodeLab, Settat (Juin 2023 – Décembre 2023) : Création d'interfaces utilisateur réactives en React.js. Rédaction de documentations techniques pour l'équipe de développement."
+            ],
+            "skills": [
+              "Python",
+              "JavaScript",
+              "HTML5/CSS3",
+              "SQL",
+              "React",
+              "Node.js",
+              "Express",
+              "Git",
+              "PostgreSQL",
+              "n8n",
+              "Make",
+              "REST APIs",
+              "Webhooks"
+            ],
+            "education": "Diplôme en Développement Informatique — Institut Spécialisé (2021 – 2023)"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Create a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Create a row2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Africa/Casablanca",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "38506bcb-1972-4794-9c37-6411e303540f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "38e4547b4054b4ba8094a4e130b59d44aad27e9f3002ae748053a71d394dce0b"
+  },
+  "nodeGroups": [],
+  "id": "KgJnwLm6sn3sct9c",
+  "tags": []
+}

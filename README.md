@@ -1,4 +1,5 @@
 🧾 AI Resume Parser (n8n)
+![AI Resume Parser Workflow](workflow.png)
 
 An n8n workflow that automatically parses CVs sent by email and stores the extracted data as structured rows in a database. Drop a resume in the inbox, get a clean candidate record — no manual entry.
 
